@@ -4,3 +4,78 @@ author: "Anthony Luna and Allison Bailey"
 date: "5/19/2020"
 output: html_document
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = TRUE,message = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(kableExtra)
+library(ggplot2)
+library(purrr)
+```
+
+
+```{r}
+delta <- 0.005
+nu <- 0.5
+g <-  0.01
+beta <- 0.05
+T_low <- 0
+T_med <- 2
+T_high <- 8
+T_expected <- 4.4
+```
+
+
+```{r}
+
+temp_change <- function(T,t){pmin((T*t)/100,T)}
+
+temp_change_low <- function(t){pmin((T_low*t)/100,T_low)}
+temp_change_med <- function(t){pmin((T_med*t)/100,T_med)}
+temp_change_high <- function(t){pmin((T_high*t)/100,T_high)}
+
+econ_retained <- function(T,t,beta){exp(-beta*temp_change(T,t)^2)}
+
+econ_retained_low  <- function(t){exp(-1*beta*temp_change_low(t)^2)}
+econ_retained_med  <- function(t){exp(-1*beta*temp_change_med(t)^2)}
+econ_retained_high <- function(t){exp(-1*beta*temp_change_high(t)^2)}
+
+consumption <- function(T,t,beta,g){econ_retained(T,t,beta)*exp(g*t)}
+
+consumption_low  <- function(t){econ_retained_low(t)*exp(g*t)}
+consumption_med  <- function(t){econ_retained_med(t)*exp(g*t)}
+consumption_high <- function(t){econ_retained_high(t)*exp(g*t)}
+
+utility <- function(T,t,beta,g,nu){(consumption(T,t,beta,g)^(1-nu))/(1-nu)}
+utility_low   <- function(t){(consumption_low(t)^(1-nu))/(1-nu)}
+utility_med   <- function(t){(consumption_med(t)^(1-nu))/(1-nu)}
+utility_high  <- function(t){(consumption_high(t)^(1-nu))/(1-nu)}
+
+r <- function(delta,nu,g){delta+(nu*g)}
+
+```
+
+# Plots
+
+## Plot temperature over time for no climate change, with modest climate change, and extreme climate change
+
+```{r}
+ggplot()+
+	stat_function(fun=temp_change_low,aes(x=0,color="No Climate Change"))+
+	stat_function(fun=temp_change_med,aes(x=0,color="Modest Climate Change"))+
+	stat_function(fun=temp_change_high,aes(x=0,color="Extreme Climate Change"))+
+	xlim(0,200)+scale_y_continuous(breaks=seq(from=0,to=10,by=1),limits = c(0,10))
+```
+
+
+```{r}
+ggplot()+
+	stat_function(fun=consumption_low,aes(x=0,color="No Climate Change"))+
+	stat_function(fun=consumption_med,aes(x=0,color="Modest Climate Change"))+
+	stat_function(fun=consumption_high,aes(x=0,color="Extreme Climate Change"))+
+	xlim(0,200)+scale_y_continuous(breaks=seq(from=0,to=10,by=1),limits = c(0,10))
+```
