@@ -1,0 +1,64 @@
+---
+title: "Draft write up for question 2C/D method"
+author: "Anthony Luna and Allison Bailey"
+date: "5/20/2020"
+output: pdf_document
+---
+
+*Back to the original parameters, suppose we could completely prevent climate change from occurring (so $T=0$ instead of $T= 4.4$) but doing so would require giving up a fraction $\theta$ of consumption every year for the next 200 years. What is the maximum value of $\theta$ society would be willing to endure every year to completely prevent climate change? Call this $\theta_{\star}$*
+
+In this given scenario, we have that the temperature change is $0$ over the 200 years, and thus the change in economic activity $K(t)=1$. Given this, we can formualte the utility function based on the provided equation for consumption such that $K(t)=1$ and this function is multiplied by some $\theta$. The resulting equation for utility is in the form
+
+\begin{equation}
+U_s(t) = \frac{(\theta exp(gt))^{1-\eta}}{1-\eta}
+\end{equation}
+
+We can find $\theta$ by looking at the present value of this 'sacrifice' scenario and comparing it to the present value of the BAU scenario. The BAU equation for utility will take the form 
+
+\begin{equation}
+U_s(t) = \frac{( exp(gt-\beta \text{min}(4.4t/100,4.4)^2))^{1-\eta}}{1-\eta}
+\end{equation}
+
+The present value for this was found previously in part 2A. Let this be $PV_{e}$. We can similarly solve for the present value of the $U_s$ such that
+
+\begin{equation}
+PV_s = \sum_{t=0}^{199} \frac{(\theta exp(gt))^{1-\eta}}{1-\eta} \times \frac{1}{(1+r)^t}.
+\end{equation}
+
+Since $\theta$ is not dependent on $t$, we can take this out of the summation, 
+
+\begin{equation}
+PV_s = \theta^{1-\eta}\sum_{t=0}^{199} \frac{(exp(gt))^{1-\eta}}{1-\eta} \times \frac{1}{(1+r)^t}.
+\end{equation}
+
+Now the summation term is equivalent to the present value of no climate change as solve for in part 2A. Let this be $PV_0$. Now we can find $\theta_{\star}$ by solving for $\theta$ such that
+
+\begin{equation}
+\theta^{1-\eta} PV_0 = PV_e
+\end{equation}
+
+which gives
+
+\begin{equation}
+\theta_{\star} = \Big(\frac{PV_e}{PV_0}\Big)^{(1-\eta)^{-1}}
+\end{equation}
+
+*Suppose we are uncertain about T , but it has the following probability distribu- tion: $T = 2$ (with probability $0.2$), $T = 4$ (with probability $0.5$), and $T = 6$ (with probability $0.3$). Calculate $\theta_{u\star}$ under uncertainty over $T$ .*
+
+Let the temperature values be given by vector $\bar{T}=(2,4,6)$ and associated probabilities be given by $\bar{p}=(0.2,0.5,0.3)$. We can find the expected utility using the following:
+
+\begin{equation}
+U_u(t) = \sum_{i=0}^2\bar{p}_i\frac{( exp(gt-\beta \text{min}(\bar{T}_it/100,\bar{T}_i)^2))^{1-\eta}}{1-\eta}
+\end{equation}
+
+and find its present value using the same form as in equation (3). Combined the equation is
+
+\begin{equation}
+PV_u = \sum_{t=0}^{199} \sum_{i=0}^2\bar{p}_i\frac{( exp(gt-\beta \text{min}(\bar{T}_it/100,\bar{T}_i)^2))^{1-\eta}}{1-\eta}
+\end{equation}
+
+To find $\theta_{u\star}$, we use the similar method as describe in equations (4-6). In this scenario we have that 
+
+\begin{equation}
+\theta_{u\star} = \Big(\frac{PV_u}{PV_0}\Big)^{(1-\eta)^{-1}}
+\end{equation}
