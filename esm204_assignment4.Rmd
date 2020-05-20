@@ -10,20 +10,22 @@ knitr::opts_chunk$set(echo = TRUE,warning = TRUE,message = TRUE)
 ```
 
 
-```{r}
+```{r lib}
 library(tidyverse)
 library(kableExtra)
 library(ggplot2)
 library(purrr)
+library(pracma)
 ```
 
 
-```{r}
+```{r var}
 delta <- 0.005
 nu <- 0.5
 g <-  0.01
 beta <- 0.05
 
+# 2B
 delta_high <- 0.005*1.1
 nu_high <-  1.1*0.5
 g_high <-   1.1*0.01
@@ -32,25 +34,53 @@ beta_high <-1.1*0.05
 T_low <- 0
 T_med <- 2
 T_high <- 8
+
+# 2A
 T_expected <- 4.4
+
+# 2B
 T_expected_high <- 4.4*1.1
+
+# 2D
+T_u_low <- 2
+T_u_low_p <- 0.2
+T_u_med <- 4
+T_u_med_p <- 0.5
+T_u_high <- 6
+T_u_high_p <- 0.3
 ```
 
 
-```{r}
+```{r fun}
 temp_change_low <- function(t){pmin((T_low*t)/100,T_low)}
 temp_change_med <- function(t){pmin((T_med*t)/100,T_med)}
 temp_change_high <- function(t){pmin((T_high*t)/100,T_high)}
+
+# 2A
 temp_change_expected <- function(t){pmin((T_expected*t)/100,T_expected)}
+
+# 2B
 temp_change_expected_high <- function(t){pmin((T_expected_high*t)/100,T_expected_high)}
 
+# 2D
+temp_change_uncertain_low <- function(t){pmin((T_u_low*t)/100,T_u_low)}
+temp_change_uncertain_med <- function(t){pmin((T_u_med*t)/100,T_u_med)}
+temp_change_uncertain_high <- function(t){pmin((T_u_high*t)/100,T_u_high)}
 
 econ_retained_low  <- function(t){exp(-1*beta*(temp_change_low(t)^2))}
 econ_retained_med  <- function(t){exp(-1*beta*(temp_change_med(t)^2))}
 econ_retained_high <- function(t){exp(-1*beta*(temp_change_high(t)^2))}
+
+# 2A
 econ_retained_expected <- function(t){exp(-1*beta*(temp_change_expected(t)^2))}
+
+# 2B
 econ_retained_expected_high <- function(t){exp(-1*beta_high*(temp_change_expected_high(t)^2))}
 
+# 2D
+econ_retained_uncertain_low  <- function(t){exp(-1*beta*(temp_change_uncertain_low(t)^2))}
+econ_retained_uncertain_med  <- function(t){exp(-1*beta*(temp_change_uncertain_med(t)^2))}
+econ_retained_uncertain_high <- function(t){exp(-1*beta*(temp_change_uncertain_high(t)^2))}
 
 consumption_low  <- function(t){econ_retained_low(t)*exp(g*t)}
 consumption_med  <- function(t){econ_retained_med(t)*exp(g*t)}
@@ -58,6 +88,10 @@ consumption_high <- function(t){econ_retained_high(t)*exp(g*t)}
 consumption_expected <- function(t){econ_retained_expected(t)*exp(g*t)}
 consumption_expected_high <- function(t){econ_retained_expected_high(t)*exp(g_high*t)}
 
+# 2D
+consumption_uncertain_low  <- function(t){econ_retained_uncertain_low(t)*exp(g*t)}
+consumption_uncertain_med  <- function(t){econ_retained_uncertain_med(t)*exp(g*t)}
+consumption_uncertain_high <- function(t){econ_retained_uncertain_high(t)*exp(g*t)}
 
 utility_low   <- function(t){(consumption_low(t)^(1-nu))/(1-nu)}
 utility_med   <- function(t){(consumption_med(t)^(1-nu))/(1-nu)}
@@ -65,9 +99,18 @@ utility_high  <- function(t){(consumption_high(t)^(1-nu))/(1-nu)}
 utility_expected  <- function(t){(consumption_expected(t)^(1-nu))/(1-nu)}
 utility_expected_high  <- function(t){(consumption_expected_high(t)^(1-nu_high))/(1-nu_high)}
 
+# 2D
+utility_uncertain_low   <- function(t){(consumption_uncertain_low(t)^(1-nu))/(1-nu)}
+utility_uncertain_med   <- function(t){(consumption_uncertain_med(t)^(1-nu))/(1-nu)}
+utility_uncertain_high  <- function(t){(consumption_uncertain_high(t)^(1-nu))/(1-nu)}
+utility_uncertain <- function(t){ T_u_low_p*utility_uncertain_low(t) +  T_u_med_p*utility_uncertain_med(t) + T_u_high_p*utility_uncertain_high(t)}
+
 r <- function(delta_var,nu_var,g_var){delta_var+(nu_var*g_var)}
 
+# 2A
 r_expected <- r(delta,nu,g)
+
+# 2B
 r_expected_high <- r(delta_high,nu_high,g_high)
 
 ```
@@ -76,7 +119,7 @@ r_expected_high <- r(delta_high,nu_high,g_high)
 
 ## Plot temperature over time for no climate change, with modest climate change, and extreme climate change
 
-```{r}
+```{r 1a}
 ggplot()+
 	stat_function(fun=temp_change_low,aes(x=0,color="No Climate Change"))+
 	stat_function(fun=temp_change_med,aes(x=0,color="Modest Climate Change"))+
@@ -85,7 +128,7 @@ ggplot()+
 ```
 
 ## Plot consumption over time for no climate change, modest climate change, and extreme climate change
-```{r}
+```{r 1b}
 ggplot()+
 	stat_function(fun=consumption_low,aes(x=0,color="No Climate Change"))+
 	stat_function(fun=consumption_med,aes(x=0,color="Modest Climate Change"))+
@@ -93,11 +136,12 @@ ggplot()+
 	xlim(0,200)+scale_y_continuous(breaks=seq(from=0,to=10,by=1),limits = c(0,10))
 ```
 ## Plot undiscounted utility over time for no climate change, modest climate change, and extreme climate change
-```{r}
+```{r 1c}
 ggplot()+
 	stat_function(fun=utility_low,aes(x=0,color="No Climate Change"))+
 	stat_function(fun=utility_med,aes(x=0,color="Modest Climate Change"))+
 	stat_function(fun=utility_high,aes(x=0,color="Extreme Climate Change"))+
+	stat_function(fun=utility_expected,aes(x=0,color="Expected Climate Change"))+
 	xlim(0,200)+scale_y_continuous(breaks=seq(from=0,to=10,by=1),limits = c(0,10))
 ```
 
@@ -105,23 +149,43 @@ ggplot()+
 
 ## Suppose T = 4.4. In other words, suppose we know for sure that under BAU, climate change will eventually lead to a 4.4 degree increase in temperature. What is the present value (i.e. discounted) utility over the next 200 years with climate change? What is the present value utility without climate change? What is the percentage loss in present value utility from climate change (call this L )?
 
-```{r}
+```{r 2a}
 pv_utility_low <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_low(x)/(1+r_expected)^x}))
 pv_utility_expected <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_expected(x)/(1+r_expected)^x}))
-pv_utility_expected_high <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_expected_high(x)/(1+r_expected_high)^x}))
+
 
 L_expected <- (pv_utility_low-pv_utility_expected)/pv_utility_low
-L_expected_high <- (pv_utility_low-pv_utility_expected_high)/pv_utility_low
 
 ```
 
 
 ## Now show how sensitive your calculation of L is to the following parameters: T , g , η , and β . To do so, calculate the % change in L that arises from a 10% increase in each of these parameters.
 
+```{r 2b}
+pv_utility_expected_high <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_expected_high(x)/(1+r_expected_high)^x}))
+
+
+L_expected_high <- (pv_utility_low-pv_utility_expected_high)/pv_utility_low
+
+```
+
 
 ## Back to the original parameters, suppose we could completely prevent climate change from occurring (so T = 0 instead of T = 4 . 4) but doing so would require giving up a fraction θ of consumption every year for the next 200 years. What is the maximum value of θ society would be willing to endure every year to completely prevent climate change? Call this θ∗ .
 
+```{r 2c}
+
+theta_star <- fzero(fun = function(theta){((theta)^(1-nu)*pv_utility_low) - pv_utility_expected},x = 0)$x
+
+```
 
 
 ## Suppose we are uncertain about T , but it has the following probability distribu- tion: T = 2 (with probability .2), T = 4 (with probability .5), and T = 6 (with probability .3). Calculate θ∗ under uncertainty over T .
+
+```{r 2d}
+pv_utility_uncertain <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_uncertain(x)/(1+r_expected)^x}))
+
+theta_star_uncertain <- fzero(fun = function(theta){((theta)^(1-nu)*pv_utility_low) - pv_utility_uncertain},x = 0)$x
+
+```
+
 
