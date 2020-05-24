@@ -1,7 +1,6 @@
 ---
 title: "ESM 204 Assignment 4"
 author: "Anthony Luna and Allison Bailey"
-date: "5/19/2020"
 output: html_document
 ---
 
@@ -9,17 +8,13 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE,warning = FALSE,message = FALSE)
 ```
 
-# TODO
-
-3. ADD NARRATIVES FOR THE OTHER SECTIONS
-4. COPY NARATIVE OVER FROM THE OTHER DOCUMENT
-
 ```{r lib}
 library(tidyverse)
 library(kableExtra)
 library(ggplot2)
 library(purrr)
 library(pracma)
+library(scales)
 ```
 
 
@@ -102,7 +97,7 @@ consumption_expected_high_T <- function(t){econ_retained_expected_high_T(t)*exp(
 consumption_expected_high_beta <- function(t){econ_retained_expected_high_beta(t)*exp(g*t)}
 consumption_expected_high_g <- function(t){econ_retained_expected(t)*exp(g_high*t)}
 consumption_low_high_beta <- function(t){econ_retained_low_high_beta(t)*exp(g*t)}
-consumption_low_high_g <- function(t){econ_retained_expected(t)*exp(g_high*t)}
+consumption_low_high_g <- function(t){econ_retained_low(t)*exp(g_high*t)}
 
 # 2D
 consumption_uncertain_low  <- function(t){econ_retained_uncertain_low(t)*exp(g*t)}
@@ -146,77 +141,132 @@ r_expected_high_nu   <- r(delta,nu_high,g)
 
 ```
 
-# Plots
+### 1. Plots
 
-*Plot temperature over time for no climate change, with modest climate change, and extreme climate change*
+> 1(a) Plot temperature over time for no climate change, with modest climate change, and extreme climate change
 
-```{r 1a}
+Below, you will see the development of a Climate Change Model with risk and discounting incorporated into the model projections. To verify legitimacy and verify vulnerability in the model, a sensitivity analysis was conducted.  The following base case parameters for this model: $\delta = .005,$ $\eta = .5,$ $g = .01,$ $\beta = .05$.
+
+
+The first step in our analysis was to develop a model that projects temperature increase over time under BAU:  $\tau(t) = \text{min}(T t/100, T)$, where $T$ represents a linear change in temperature over time and plateaus at year 100. Our modeling parameters were set at  $T = 0$ representing “no climate change”, $T = 2$ representing “Modest Climate Change”, and $T = 8$ representing Extreme Climate Change. 
+
+Below, you can see our BAU temperature change over time with respect to the given year where y is the change is temperature and x is the year.
+
+```{r 1a, fig.align = "center"}
 ggplot()+
 	stat_function(fun=temp_change_low,aes(x=0,color="No Climate Change"))+
 	stat_function(fun=temp_change_med,aes(x=0,color="Modest Climate Change"))+
 	stat_function(fun=temp_change_high,aes(x=0,color="Extreme Climate Change"))+
-	xlim(0,200)+scale_y_continuous(breaks=seq(from=0,to=10,by=1),limits = c(0,10))
+	xlim(0,200)+scale_y_continuous(breaks=seq(from=0,to=10,by=1),limits = c(0,10))+
+	labs(title = "Temperature change over time", 
+		subtitle = "Different climate change scenarios",
+	 	caption = "",
+	 	x = "Time (year)",
+	 	y = "Temperature change (C)",
+	 	col = "Scenario") + 
+	 	theme_minimal() + 
+	 	# This centers our title and subtitle 
+	 	theme(plot.title = element_text(hjust= 0.5),
+	 	plot.subtitle = element_text(hjust= 0.5))
 ```
 
-*Plot consumption over time for no climate change, modest climate change, and extreme climate change*
+> 1(b) Plot consumption over time for no climate change, modest climate change, and extreme climate change
 
-```{r 1becon}
-ggplot()+
-	stat_function(fun=econ_retained_low,aes(x=0,color="No Climate Change"))+
-	stat_function(fun=econ_retained_med,aes(x=0,color="Modest Climate Change"))+
-	stat_function(fun=econ_retained_high,aes(x=0,color="Extreme Climate Change"))+
-	xlim(0,200)+scale_y_continuous(breaks=seq(from=0,to=1.1,by=.1),limits = c(0,1.1))
-```
+Next, we added in the effects of economic activity (Consumption) due to  temperature increase over time under BAU: $K(t)$ is the fraction of economic activity that is retained in a year if the temperature is $\tau(t)$, given by $K(t) = exp(−\beta\tau(t)^2)$.   We plugged in our results of $\tau(t)$ from our model equations for “None”, “Modest”, and “Extreme” model.  To finalize the model, we included a steady consumption rate into the model at the rate of $g$, however, consumption rate will be reduced by economic activity $K(t)$ with increase in climate change as depicted in our graph above below.  The Consumption rate over time is represented by the equation  $C(t) = K(t)exp(gt)$. 
 
-```{r 1b}
+As graphed below, the results show a consistent growth of consumption under BAU when there is no climate change.  With Modest Climate change there is a small shift down showing continued consumption, however, at a slower pace than with no climate change.  Under BAU with extreme climate change, consumption steadily declines throughout time. 
+
+
+```{r 1b, fig.align = "center"}
 ggplot()+
 	stat_function(fun=consumption_low,aes(x=0,color="No Climate Change"))+
 	stat_function(fun=consumption_med,aes(x=0,color="Modest Climate Change"))+
 	stat_function(fun=consumption_high,aes(x=0,color="Extreme Climate Change"))+
-	xlim(0,200)+scale_y_continuous(breaks=seq(from=0,to=10,by=1),limits = c(0,10))
+	xlim(0,200)+scale_y_continuous(breaks=seq(from=0,to=10,by=1),limits = c(0,10))+
+	labs(title = "Total annual consumption over time", 
+		subtitle = "Different climate change scenarios",
+	 	caption = "",
+	 	x = "Time (year)",
+	 	y = "Total consumption",
+	 	col = "Scenario") + 
+	 	theme_minimal() + 
+	 	# This centers our title and subtitle 
+	 	theme(plot.title = element_text(hjust= 0.5),
+	 	plot.subtitle = element_text(hjust= 0.5))
 ```
 
-*Plot undiscounted utility over time for no climate change, modest climate change, and extreme climate change*
+> 1(c) Plot undiscounted utility over time for no climate change, modest climate change, and extreme climate change
 
-```{r 1c}
+Next, we included an equation to represent society’s utility from consumption which is given by the function $U(C) = \frac{C^{1−η}}{1 − η}$.  This model does not account for the discount rate at net present value, however, we will address discount rates in our model later on. 
+
+As graphed below, the results show a similar model trajectory of increased growth for “Modest” to “No” climate change, with modest climate change shifting downward at the 50 year mark. BAU with “Extreme” climate change will consistently decrease until year 100, then have a mild linear increase moving toward the 200 year mark. The expected social utility of consumption when affected by Climate Change for BAU shows a consistent decrease downward with a linear increase moving toward the 200 year mark. 
+
+
+```{r 1c, fig.align = "center"}
 ggplot()+
 	stat_function(fun=utility_low,aes(x=0,color="No Climate Change"))+
 	stat_function(fun=utility_med,aes(x=0,color="Modest Climate Change"))+
 	stat_function(fun=utility_high,aes(x=0,color="Extreme Climate Change"))+
-	stat_function(fun=utility_expected,aes(x=0,color="Expected Climate Change"))+
-	xlim(0,200)+scale_y_continuous(breaks=seq(from=0,to=10,by=1),limits = c(0,10))
+	xlim(0,200)+scale_y_continuous(breaks=seq(from=0,to=10,by=1),limits = c(0,10))+
+	labs(title = "Society's utility from consumption", 
+		subtitle = "Different climate change scenarios",
+	 	caption = "",
+	 	x = "Time (year)",
+	 	y = "Utility",
+	 	col = "Scenario") + 
+	 	theme_minimal() + 
+	 	# This centers our title and subtitle 
+	 	theme(plot.title = element_text(hjust= 0.5),
+	 	plot.subtitle = element_text(hjust= 0.5))
 ```
 
-# Analysis
+### 2. Analysis
 
-*Suppose T = 4.4. In other words, suppose we know for sure that under BAU, climate change will eventually lead to a 4.4 degree increase in temperature. What is the present value (i.e. discounted) utility over the next 200 years with climate change? What is the present value utility without climate change? What is the percentage loss in present value utility from climate change (call this L )?*
+> 2(a) Suppose $T = 4.4$. In other words, suppose we know for sure that under BAU, climate change will eventually lead to a 4.4 degree increase in temperature. What is the present value (i.e. discounted) utility over the next 200 years with climate change? What is the present value utility without climate change? What is the percentage loss in present value utility from climate change (call this L)?
 
 ```{r 2a}
-pv_utility_low <- sum(map_dbl(seq(from=0,to=199,by=1),function(x){utility_low(x)/(1+r_expected)^x}))
-pv_utility_expected <- sum(map_dbl(seq(from=0,to=199,by=1),function(x){utility_expected(x)/(1+r_expected)^x}))
+pv_utility_low <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_low(x)/(1+r_expected)^x}))
+pv_utility_expected <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_expected(x)/(1+r_expected)^x}))
 
 
 L_expected <- (pv_utility_low-pv_utility_expected)/pv_utility_low
+L_expected <- (pv_utility_low-pv_utility_expected)/pv_utility_low
+L_expected_p <- percent((pv_utility_low-pv_utility_expected)/pv_utility_low)
 
 ```
 
-Present Value of Utility without climate change = `r pv_utility_low`
+Using the provided equations for temperature change, consumption, economic activity retained, utility, and the Ramsey Rule, we have that the present value of the utility of consumption under the no climate change scenario $(T=0)$ can be calcualted such that
 
-Present Value of Utility with climate change = `r pv_utility_expected`
+\begin{eqnarray}
+PV_0 &=& \sum_{t=0}^{200} \frac{(exp(gt))^{1-\eta}}{1-\eta} \times \frac{1}{(1+r)^t}, \\
+PV_0 &=& `r round(pv_utility_low,digits=2)`.
+\end{eqnarray}
 
-L = `r L_expected`
+Similarly, the present value of the utility of consumption under the expected climate change scenario $(T=4.4)$ can be calcualted such that
 
-*Now show how sensitive your calculation of L is to the following parameters: T , g , η , and β . To do so, calculate the % change in L that arises from a 10% increase in each of these parameters.*
+\begin{eqnarray}
+PV_e &=& \sum_{t=0}^{200} \frac{( exp(gt-\beta \text{min}(4.4t/100,4.4)^2))^{1-\eta}}{1-\eta} \times \frac{1}{(1+r)^t},\\
+PV_e &=& `r round(pv_utility_expected,digits=2)`.
+\end{eqnarray}
+
+The percent loss of present value, $L$, is calculated such that
+
+\begin{eqnarray}
+L &=& \frac{PV_0 - PV_e}{PV_0} \\
+L &=& `r round(L_expected,digits=2)`
+\end{eqnarray}
+
+> 2(b) Now show how sensitive your calculation of L is to the following parameters: $T$ , $g$ , $\eta$ , and $\beta$ . To do so, calculate the % change in L that arises from a 10% increase in each of these parameters.
 
 ```{r 2b}
-pv_utility_expected_high_T    <- sum(map_dbl(seq(from=0,to=199,by=1),function(x){utility_expected_high_T(x)/(1+r_expected_high_T)^x}))
-pv_utility_expected_high_beta <- sum(map_dbl(seq(from=0,to=199,by=1),function(x){utility_expected_high_beta(x)/(1+r_expected_high_beta)^x}))
-pv_utility_expected_high_g    <- sum(map_dbl(seq(from=0,to=199,by=1),function(x){utility_expected_high_g(x)/(1+r_expected_high_g)^x}))
-pv_utility_expected_high_nu   <- sum(map_dbl(seq(from=0,to=199,by=1),function(x){utility_expected_high_nu(x)/(1+r_expected_high_nu)^x}))
+pv_utility_expected_high_T    <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_expected_high_T(x)/(1+r_expected_high_T)^x}))
+pv_utility_expected_high_beta <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_expected_high_beta(x)/(1+r_expected_high_beta)^x}))
+pv_utility_expected_high_g    <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_expected_high_g(x)/(1+r_expected_high_g)^x}))
+pv_utility_expected_high_nu   <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_expected_high_nu(x)/(1+r_expected_high_nu)^x}))
 
-pv_utility_low_high_beta <- sum(map_dbl(seq(from=0,to=199,by=1),function(x){utility_low_high_beta(x)/(1+r_expected_high_beta)^x}))
-pv_utility_low_high_g    <- sum(map_dbl(seq(from=0,to=199,by=1),function(x){utility_low_high_g(x)/(1+r_expected_high_g)^x}))
-pv_utility_low_high_nu   <- sum(map_dbl(seq(from=0,to=199,by=1),function(x){utility_low_high_nu(x)/(1+r_expected_high_nu)^x}))
+pv_utility_low_high_beta <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_low_high_beta(x)/(1+r_expected_high_beta)^x}))
+pv_utility_low_high_g    <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_low_high_g(x)/(1+r_expected_high_g)^x}))
+pv_utility_low_high_nu   <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_low_high_nu(x)/(1+r_expected_high_nu)^x}))
 
 L_expected_high_T    <- (pv_utility_low-pv_utility_expected_high_T)/pv_utility_low #Since T=0 and 1.1*0=0, we use the baseline case here.
 L_expected_high_beta <- (pv_utility_low_high_beta-pv_utility_expected_high_beta)/pv_utility_low_high_beta
@@ -225,30 +275,91 @@ L_expected_high_nu   <- (pv_utility_low_high_nu  -pv_utility_expected_high_nu)/p
 
 ```
 
-increased parameter|Present Value Utility| L |
--------------------|---------------------|---|
-T|`r pv_utility_expected_high_T`|`r L_expected_high_T`|
-$\beta$|`r pv_utility_expected_high_beta`|`r L_expected_high_beta`|
-$\eta$|`r pv_utility_expected_high_nu`|`r L_expected_high_nu`|
-g|`r pv_utility_expected_high_g`|`r L_expected_high_g`|
+Sensitivity analysis was done by increasing each parameter by 10% while fixing the other parameters at baseline. The calculation were done as described in 2(a) and the results are outlined in the following table. Baseline case as calculated in 2(a) are included as a reference in row 1.
 
-*Back to the original parameters, suppose we could completely prevent climate change from occurring (so T = 0 instead of T = 4 . 4) but doing so would require giving up a fraction θ of consumption every year for the next 200 years. What is the maximum value of θ society would be willing to endure every year to completely prevent climate change? Call this θ∗*
+Increased parameter (10% from baseline)|Present Value Utility (T=0)                 |Present Value Utility (T=4.4)                    | L                               |
+---------------------------------------|--------------------------------------------|-------------------------------------------------|---------------------------------|
+Baseline                               |`r round(pv_utility_low,digits=2)`          |`r round(pv_utility_expected,digits=2)`          |`r percent(L_expected)`          |
+T$^\diamond$                           |`r round(pv_utility_low,digits=2)`          |`r round(pv_utility_expected_high_T,digits=2)`   |`r percent(L_expected_high_T)`   |
+$\beta$                                |`r round(pv_utility_low_high_beta,digits=2)`|`r round(pv_utility_expected_high_beta,digits=2)`|`r percent(L_expected_high_beta)`|
+g                                      |`r round(pv_utility_low_high_g,digits=2)`   |`r round(pv_utility_expected_high_g,digits=2)`   |`r percent(L_expected_high_g)`   |
+$\eta$                                 |`r round(pv_utility_low_high_nu,digits=2)`  |`r round(pv_utility_expected_high_nu,digits=2)`  |`r percent(L_expected_high_nu)`  |
+
+$\diamond$: Baseline for no climate change scenario temperature change is 0, therefore 10% increase is still 0.
+
+> 2(c) Back to the original parameters, suppose we could completely prevent climate change from occurring (so T = 0 instead of T = 4 . 4) but doing so would require giving up a fraction θ of consumption every year for the next 200 years. What is the maximum value of θ society would be willing to endure every year to completely prevent climate change? Call this θ∗
+
 ```{r 2c}
 
-theta_star <- fzero(fun = function(theta){((theta)^(1-nu)*pv_utility_low) - pv_utility_expected},x = 0)$x
+theta_star <- fzero(fun = function(theta){((1-theta)^(1-nu)*pv_utility_low) - pv_utility_expected},x = 0)$x
 
 ```
 
-$\theta_{\star}$ = `r theta_star`
+In this given scenario, we have that the temperature change is $0$ over the $200$ years, and thus the change in economic activity $K(t)=1$. Given this, we can formualte the utility function based on the provided equation for consumption such that $K(t)=1$ and this function is multiplied by $1-\theta$ representing a fixed 'sacrifice' in economic consumption. The resulting equation for utility is in the form
 
-*Suppose we are uncertain about T , but it has the following probability distribu- tion: T = 2 (with probability .2), T = 4 (with probability .5), and T = 6 (with probability .3). Calculate θ∗ under uncertainty over T .*
+\begin{equation}
+U_s(t) = \frac{((1-\theta) exp(gt))^{1-\eta}}{1-\eta}
+\end{equation}
+
+We can find $\theta$ by looking at the present value of this 'sacrifice' scenario and comparing it to the present value of the BAU scenario. The BAU equation for utility will take the form 
+
+\begin{equation}
+U_e(t) = \frac{( exp(gt-\beta \text{min}(4.4t/100,4.4)^2))^{1-\eta}}{1-\eta}.
+\end{equation}
+
+The present value for this was found previously in part 2A. Let this be $PV_{e}$. We can similarly solve for the present value of the $U_s$ such that
+
+\begin{equation}
+PV_s = \sum_{t=0}^{200} \frac{((1-\theta) exp(gt))^{1-\eta}}{1-\eta} \times \frac{1}{(1+r)^t}.
+\end{equation}
+
+Since $\theta$ is not dependent on $t$, we can take this out of the summation, 
+
+\begin{equation}
+PV_s = (1-\theta)^{1-\eta}\sum_{t=0}^{200} \frac{(exp(gt))^{1-\eta}}{1-\eta} \times \frac{1}{(1+r)^t}.
+\end{equation}
+
+Now the summation term is equivalent to the present value of no climate change as solve for in part 2A. Let this be $PV_0$. Now we can find $\theta_{\star}$ by solving for $\theta$ such that
+
+\begin{equation}
+(1-\theta_{\star})^{1-\eta} PV_0 = PV_e
+\end{equation}
+
+which gives
+
+\begin{eqnarray}
+\theta_{\star} & = & 1-\Bigg(\frac{PV_e}{PV_0}\Bigg)^{(1-\eta)^{-1}}, \\
+\theta_{\star} & = & `r round(theta_star,digits=3)`.
+\end{eqnarray}
+
+This means that society would be willing to sacrifice up to $39.4\%$ of consumption annually before the costs of mitigating climate change out weight the benefits.
+
+> 2(d) Suppose we are uncertain about T , but it has the following probability distribution: $T = 2$ (with probability $0.2$), $T = 4$ (with probability $0.5$), and $T = 6$ (with probability $0.3$). Calculate $\theta_{\star}$ under uncertainty over $T$ .
 
 ```{r 2d}
-pv_utility_uncertain <- sum(map_dbl(seq(from=0,to=199,by=1),function(x){utility_uncertain(x)/(1+r_expected)^x}))
+pv_utility_uncertain <- sum(map_dbl(seq(from=0,to=200,by=1),function(x){utility_uncertain(x)/(1+r_expected)^x}))
 
-theta_star_uncertain <- fzero(fun = function(theta){((theta)^(1-nu)*pv_utility_low) - pv_utility_uncertain},x = 0)$x
+theta_star_uncertain <- fzero(fun = function(theta){((1-theta)^(1-nu)*pv_utility_low) - pv_utility_uncertain},x = 0)$x
 
 ```
 
+Let the temperature values be given by vector $\bar{T}=(2,4,6)$ and associated probabilities be given by $\bar{p}=(0.2,0.5,0.3)$. We can find the expected utility using the following:
 
-$\theta_{u\star}$ = `r theta_star_uncertain`
+\begin{equation}
+U_u(t) = \sum_{i=0}^2\bar{p}_i\frac{( exp(gt-\beta \text{min}(\bar{T}_it/100,\bar{T}_i)^2))^{1-\eta}}{1-\eta},
+\end{equation}
+
+and find its present value using the same method described in 2A. Combined the equation is
+
+\begin{equation}
+PV_u = \sum_{t=0}^{200} \sum_{i=0}^2\bar{p}_i\frac{( exp(gt-\beta \text{min}(\bar{T}_it/100,\bar{T}_i)^2))^{1-\eta}}{1-\eta}.
+\end{equation}
+
+To find $\theta_{u\star}$ under this scenario of uncertain temperature change outcomes, we use the similar method as describe in equations 2C. In this scenario we have that 
+
+\begin{eqnarray}
+\theta_{u\star} & = & 1-\Bigg(\frac{PV_u}{PV_0}\Bigg)^{(1-\eta)^{-1}}. \\
+\theta_{u\star} & = & `r round(theta_star_uncertain,digits=3)`,
+\end{eqnarray}
+
+This means that society would be willing to sacrifice up to $37.7\%$ of consumption annually before the costs of mitigating climate change out weight the benefits.
